@@ -20,7 +20,7 @@ from tqdm import tqdm
 
 class RelayKitchenTrajectoryDataset(TensorDataset):
     def __init__(self, data_directory, device="cpu"):
-        data_directory = Path(data_directory)
+        data_directory = Path(__file__).parent.parent.resolve() / Path(data_directory)
         observations = np.load(data_directory / "observations_seq.npy")
         actions = np.load(data_directory / "actions_seq.npy")
         masks = np.load(data_directory / "existence_mask.npy")
@@ -58,7 +58,7 @@ class CarlaMultipathTrajectoryDataset(Dataset):
     ):
         assert 0.0 < subset_fraction <= 1.0, "subset_fraction must be in (0, 1]"
         self.device = device
-        self.data_directory = Path(data_directory)
+        self.data_directory = Path(__file__).parent.parent.resolve() / Path(data_directory)
         print("CARLA loading: started")
         self.seq_lengths_all = torch.load(self.data_directory / "seq_lengths.pth")
         self.observations_all = torch.load(self.data_directory / "all_observations.pth")
@@ -116,7 +116,7 @@ class CarlaMultipathStateTrajectoryDataset(Dataset):
     ):
         assert 0.0 < subset_fraction <= 1.0, "subset_fraction must be in (0, 1]"
         self.device = device
-        self.data_directory = Path(data_directory)
+        self.data_directory = Path(__file__).parent.parent.resolve() / Path(data_directory)
         self.seq_lengths_all = torch.load(self.data_directory / "seq_lengths.pth")
         self.observations_all = torch.load(
             self.data_directory / "all_observations.pth"
@@ -177,7 +177,7 @@ class PushTrajectoryDataset(TensorDataset):
         device="cpu",
     ):
         self.device = device
-        self.data_directory = Path(data_directory)
+        self.data_directory = Path(__file__).parent.parent.resolve() / Path(data_directory)
         logging.info("Multimodal loading: started")
         self.observations = np.load(
             self.data_directory / "multimodal_push_observations.npy"
@@ -214,25 +214,37 @@ class MultiPathTrajectoryDataset(TensorDataset):
         path_probs=multi_route.PATH_PROBS_1,
         num_samples=200_000,
         device="cpu",
+        noise_scale=0
     ):
         path_generator = multi_route.PathGenerator(
             waypoints=path_waypoints,
             step_size=1,
             num_draws=100,
-            noise_scale=0.05,
+            noise_scale=noise_scale,
         )
-        observations, actions, length_mask = path_generator.get_sequence_dataset(
+        path_generator.draw(show=False, save=True)
+        observations, actions, masks = path_generator.get_sequence_dataset(
             num_paths=num_samples, probabilities=path_probs
         )
-        self.length_mask = length_mask
+        self.observations = torch.from_numpy(observations).to(device).float()
+        self.actions = torch.from_numpy(actions).to(device).float()
+        self.masks = torch.from_numpy(masks).to(device).float()
         super().__init__(
-            torch.from_numpy(observations).to(device).float(),
-            torch.from_numpy(actions).to(device).float(),
-            torch.from_numpy(length_mask).to(device).float(),
+            self.observations,
+            self.actions,
+            self.masks,
         )
 
     def get_seq_length(self, idx) -> int:
-        return int(self.length_mask[idx].sum().item())
+        return int(self.masks[idx].sum().item())
+
+    def get_all_actions(self):
+        result = []
+        # mask out invalid actions
+        for i in range(len(self.masks)):
+            T = int(self.masks[i].sum().item())
+            result.append(self.actions[i, :T, :])
+        return torch.cat(result, dim=0)
 
 
 class GridTrajectoryDataset(TensorDataset):
@@ -462,10 +474,29 @@ def get_push_train_val(
 
 
 def get_multiroute_dataset(
-    train_fraction=0.9, random_seed=42, device="cpu", window_size=10
+        train_fraction=0.9,
+        random_seed=42,
+        device="cpu",
+        window_size=10,
+        pointmass_version=1,
+        noise_scale=0,
 ):
+    if pointmass_version == 1:
+        waypoints = multi_route.MULTI_PATH_WAYPOINTS_1
+        probs = multi_route.PATH_PROBS_1
+    elif pointmass_version == 2:
+        waypoints = multi_route.MULTI_PATH_WAYPOINTS_2
+        probs = multi_route.PATH_PROBS_2
+    else:
+        raise ValueError(f"Invalid pointmass version: {pointmass_version}")
+
     train_set, val_set = split_datasets(
-        MultiPathTrajectoryDataset(num_samples=20_000),
+        MultiPathTrajectoryDataset(
+            path_waypoints=waypoints,
+            path_probs=probs,
+            num_samples=20_000,
+            noise_scale=noise_scale,
+        ),
         train_fraction=train_fraction,
         random_seed=random_seed,
     )

@@ -1,0 +1,19 @@
+name: kitchen
+gym_name: kitchen-all-v0
+args: []
+kwargs: {}
+obs_dim: 60
+action_dim: 9
+action_min: null
+action_max: null
+
+workspace:
+  _target_: workspaces.adept_kitchen.AdeptKitchenWorkspace
+
+dataset:
+  _target_: dataloaders.trajectory_loader.get_relay_kitchen_train_val
+  data_directory: ./data/bet_data_release/kitchen
+  window_size: ${experiment.window_size}
+  
+
+

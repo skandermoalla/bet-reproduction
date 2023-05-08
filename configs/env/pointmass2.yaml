@@ -1,0 +1,17 @@
+name: pointmass2
+gym_name: multipath-v2
+args: []
+kwargs: {}
+obs_dim: 2
+action_dim: 2
+action_min: null
+action_max: null
+
+workspace:
+  _target_: workspaces.adept_kitchen.MultiPathWorkspace
+
+dataset:
+  _target_: dataloaders.trajectory_loader.get_multiroute_dataset
+  pointmass_version: 2
+  window_size: ${experiment.window_size}
+  noise_scale: 0.1

@@ -1,44 +1,51 @@
 import logging
 from gym.envs.registration import register
+import numpy as np
 
 # Register the environment
 register(
     id="multipath-v1",
-    entry_point="envs.multi_route.v1:MultiRouteEnvV1",
+    entry_point="envs.multi_route.v1:MultiRouteEnvV0",
     max_episode_steps=50,
     reward_threshold=1.0,
 )
 
-try:
-    import carla
+register(
+    id="multipath-fixed-start-v1",
+    entry_point="envs.multi_route.v1:MultiRouteEnvV0",
+    max_episode_steps=50,
+    reward_threshold=1.0,
+    kwargs=dict(
+        start_state_noise=0,
+    )
+)
 
-    register(
-        id="carla-multipath-split-v0",
-        entry_point="envs.carla.v0:CarlaMultipathSplitV0",
-        max_episode_steps=1500,
-        reward_threshold=1.0,
+register(
+    id="multipath-v2",
+    entry_point="envs.multi_route.v1:MultiRouteEnvV0",
+    max_episode_steps=50,
+    reward_threshold=1.0,
+    kwargs=dict(
+        obs_high_bound=10,
+        obs_low_bound=-2,
+        starting_point=np.array([0, 0]),
+        target=np.array([8, 8]),
     )
-    register(
-        id="carla-multipath-town10-merge-v0",
-        entry_point="envs.carla.v0:CarlaMultipathTown10MergeV0",
-        max_episode_steps=1500,
-        reward_threshold=1.0,
+)
+
+register(
+    id="multipath-fixed-start-v2",
+    entry_point="envs.multi_route.v1:MultiRouteEnvV0",
+    max_episode_steps=50,
+    reward_threshold=1.0,
+    kwargs=dict(
+        obs_high_bound=10,
+        obs_low_bound=-2,
+        start_state_noise=0,
+        starting_point=np.array([0, 0]),
+        target=np.array([8, 8]),
     )
-    register(
-        id="carla-multipath-town04-merge-v0",
-        entry_point="envs.carla.v0:CarlaMultipathTown04MergeV0",
-        max_episode_steps=1500,
-        reward_threshold=1.0,
-    )
-    register(
-        id="carla-multipath-state-v0",
-        entry_point="envs.carla.state_v0:CarlaMultipathStateEnvV0",
-        max_episode_steps=1500,
-        reward_threshold=1.0,
-    )
-except ImportError:
-    logging.warning("Carla not installed, skipping")
-    pass
+)
 
 try:
     import adept_envs

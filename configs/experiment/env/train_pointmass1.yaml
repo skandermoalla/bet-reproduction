@@ -1,0 +1,27 @@
+# @package _global_
+
+experiment:
+
+  # Dataset details
+  train_fraction: 0.95
+  batch_size: 64
+  num_workers: 1
+  window_size: 2
+
+  # Training details
+  num_training_epochs: 1
+  data_parallel: False
+  optim: Adam
+  save_latents: False
+
+  lr: 1e-4
+  weight_decay: 0.1
+  betas:
+    - 0.9
+    - 0.95
+  grad_norm_clip: 1.0
+  num_prior_epochs: 10
+
+  # Logging.
+  log_dataset: True
+  log_bins: True

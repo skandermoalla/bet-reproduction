@@ -1,0 +1,12 @@
+defaults:
+  - general: default
+  - env: blockpush
+  - action_interface: default
+  - model: mingpt
+  - experiment: train
+  - sweeper: basic
+  - action_interface/env: default_${env}
+  - model/env: ${model}_${env}
+  - experiment/env: ${experiment}_${env}
+  - override hydra/sweeper: ${sweeper}
+  

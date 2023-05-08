@@ -1,0 +1,9 @@
+# @package _global_
+
+hydra:
+  mode: MULTIRUN
+  sweeper:
+    params:
+      experiment.lr: 1e-4
+
+        

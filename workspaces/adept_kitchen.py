@@ -20,9 +20,7 @@ import envs
 class AdeptKitchenWorkspace(base.Workspace):
     def _setup_plots(self):
         plt.ion()
-        obs_mapper_path = (
-            Path(self.cfg.env_vars.datasets.relay_kitchen) / "obs_mapper.pkl"
-        )
+        obs_mapper_path = Path(self.cfg.env.dataset.data_directory) / "obs_mapper.pkl"
         with (obs_mapper_path).open("rb") as f:
             obs_mapper = joblib.load(f)
         self.obs_mapper = obs_mapper
@@ -35,7 +33,7 @@ class AdeptKitchenWorkspace(base.Workspace):
 
         self._figure_2 = plt.figure()
         action_mapper_path = (
-            Path(self.cfg.env_vars.datasets.relay_kitchen) / "action_mapper.pkl"
+            Path(self.cfg.env.dataset.data_directory) / "action_mapper.pkl"
         )
         with (action_mapper_path).open("rb") as f:
             action_mapper = joblib.load(f)
@@ -53,10 +51,10 @@ class AdeptKitchenWorkspace(base.Workspace):
 
     def _setup_starting_state(self):
         self.init_qpos = np.load(
-            Path(self.cfg.env_vars.datasets.relay_kitchen) / "all_init_qpos.npy"
+            Path(self.cfg.env.dataset.data_directory) / "all_init_qpos.npy"
         )
         self.init_qvel = np.load(
-            Path(self.cfg.env_vars.datasets.relay_kitchen) / "all_init_qvel.npy"
+            Path(self.cfg.env.dataset.data_directory) / "all_init_qvel.npy"
         )
 
     def _start_from_known(self):

@@ -34,17 +34,17 @@ class AbstractGenerator(AbstractActionAE, utils.TrainWithLogger):
         param_set = set(param_list)
         if not param_set.issuperset(obs_encoding_net.parameters()):
             self.optimizer.add_param_group({"params": obs_encoding_net.parameters()})
-        self.iterator = range(self.train_cfg.num_training_epochs)
+        self.iterator = range(self.train_experiment.num_training_epochs)
         self.reset_log()
         for epoch in self.iterator:
             self.epoch = epoch
             self.train_epoch(input_dataloader, obs_encoding_net)
             self.flush_log(epoch)
 
-            if ((self.epoch + 1) % self.train_cfg.eval_every) == 0:
+            if ((self.epoch + 1) % self.train_cfg.experiment.eval_every) == 0:
                 self.eval_epoch(eval_dataloader, obs_encoding_net)
 
-            if ((self.epoch + 1) % self.train_cfg.save_every) == 0:
+            if ((self.epoch + 1) % self.train_cfg.experiment.save_every) == 0:
                 self.save_snapshot()
 
     def eval_epoch(
@@ -73,9 +73,11 @@ class AbstractGenerator(AbstractActionAE, utils.TrainWithLogger):
                 act, enc_obs, return_all_losses=True
             )
             loss.backward()
-            nn.utils.clip_grad_norm_(self.parameters(), self.train_cfg.grad_norm_clip)
             nn.utils.clip_grad_norm_(
-                obs_encoding_net.parameters(), self.train_cfg.grad_norm_clip
+                self.parameters(), self.train_cfg.experiment.grad_norm_clip
+            )
+            nn.utils.clip_grad_norm_(
+                obs_encoding_net.parameters(), self.train_cfg.experiment.grad_norm_clip
             )
             self.optimizer.step()
             self.log_append("train", len(observations), loss_components)

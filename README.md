@@ -1,122 +1,297 @@
-# Behavior Transformers: Cloning k modes with one stone
+# A Reproducibility study of [_Behavior Transformers: Cloning k modes with one stone_](https://github.com/notmahi/bet)
 
-[[Arxiv]](https://arxiv.org/abs/2206.11251) [[Code]](https://github.com/notmahi/bet) [[Data]](https://osf.io/983qz/) [[Project page and videos]](https://mahis.life/bet/)
+## Overview
 
-Created by [Nur Muhammad (Mahi) Shafiullah](https://mahis.life), [Zichen Jeff Cui](https://jeffcui.com/), [Ariuntuya (Arty) Altanzaya](https://www.artys.page/), and [Lerrel Pinto](https://www.lerrelpinto.com/) at New York University.
+This repository extends the original code repository of [_Behavior Transformers: Cloning k modes with one
+stone_](https://github.com/notmahi/bet) to serve as an in-depth reproducibility assessment of the paper.
 
+It contains scripts to reproduce each of the figures and tables in the paper in addition to scripts to run additional
+experiments.
 
+It is structured as follows:
 
-https://user-images.githubusercontent.com/3000253/174540589-35c2d51b-3a5b-42d8-9f80-483b61df91a7.mp4
+## Table of contents
 
+<!-- TOC -->
+* [A Reproducibility study of _Behavior Transformers: Cloning k modes with one stone_](#a-reproducibility-study-of-behavior-transformers-cloning-k-modes-with-one-stone)
+  * [Overview](#overview)
+  * [Table of contents](#table-of-contents)
+  * [Getting started](#getting-started)
+    * [Installation and setup](#installation-and-setup)
+      * [Cloning](#cloning)
+      * [Datasets](#datasets)
+    * [Environment](#environment)
+      * [A&B: amd64 (CUDA and CPU-only)](#ab--amd64--cuda-and-cpu-only-)
+        * [Using a pre-built Docker Image](#using-a-pre-built-docker-image)
+      * [C: MPS (Apple silicon)](#c--mps--apple-silicon-)
+    * [Logging](#logging)
+    * [Testing](#testing)
+    * [Using the reproducibility scripts](#using-the-reproducibility-scripts)
+  * [Reproducing our results](#reproducing-our-results)
+  * [Experiment with different configurations](#experiment-with-different-configurations)
+<!-- TOC -->
 
-
-## Abstract
-While behavior learning has made impressive progress in recent times, it lags behind computer vision and natural language processing due to its inability to leverage large, human generated datasets. Human behavior has a wide variance, multiple modes, and human demonstrations naturally don’t come with reward labels. These properties limit the applicability of current methods in Offline RL and Behavioral Cloning to learn from large, pre-collected datasets. In this work, we present Behavior Transformer (BeT), a new technique to model unlabeled demonstration data with multiple modes. BeT retrofits standard transformer architectures with action discretization coupled with a multi-task action correction inspired by offset prediction in object detection. This allows us to leverage the multi-modal modeling ability of modern transformers to predict multi-modal continuous actions. We experimentally evaluate BeT on a variety of robotic manipulation and self-driving behavior datasets. We show that BeT significantly improves over prior state-of-the-art work on solving demonstrated tasks while capturing the major modes present in the pre-collected datasets. Finally, through an extensive ablation study we further analyze the importance of every crucial component in BeT.
-
-## Code release
-
-In this repository, you can find the code to reproduce Behavior Transformer (BeT). The following assumes our current working directory is the root folder of this project repository; tested on Ubuntu 20.04 LTS (amd64).
 
 ## Getting started
-### Setting up the project environments
-- Install the project environment:
-  ```
-  conda env create --file=conda_env.yml
-  ```
-- Activate the environment:
-  ```
-  conda activate behavior-transformer
-  ```
-- Clone the Relay Policy Learning repo:
-  ```
-  git clone https://github.com/google-research/relay-policy-learning
-  ```
-- Install MuJoCo 2.1.0: https://github.com/openai/mujoco-py#install-mujoco
-- Install CARLA server 0.9.13: https://carla.readthedocs.io/en/0.9.13/start_quickstart/#a-debian-carla-installation
-- To enable logging, log in with a `wandb` account:
-  ```
-  wandb login
-  ```
-  Alternatively, to disable logging altogether, set the environment variable `WANDB_MODE`:
-  ```
-  export WANDB_MODE=disabled
-  ```
 
-### Getting the training datasets
-Datasets used for training will be available at this OSF link: [https://osf.io/983qz/](https://osf.io/983qz/).
-- Download and extract the datasets from the tar archive.
-- Activate the conda environment with `conda activate behavior-transformer`.
-- In the extracted folder, run `python3 process_carla.py carla` to preprocess the CARLA dataset into tensors.
-- In `./config/env_vars/env_vars.yaml`, set the dataset paths to the unzipped directories.
-  - `carla_multipath_town04_merge`: CARLA environment
-  - `relay_kitchen`: Franka kitchen environment
-  - `multimodal_push_fixed_target`: Block push environment
+### Installation and setup
 
-## Reproducing experiments
-The following assumes our current working directory is the root folder of this project repository.
+#### Cloning
 
-To reproduce the experiment results, the overall steps are:
-1. Activate the conda environment with
+Clone the dataset with its submodules.
+We track [Relay Policy Learning](https://github.com/google-research/relay-policy-learning) repo as a submodule for the
+Franka kitchen environment.
+It uses [`git-lfs`](https://git-lfs.github.com/). Make sure you have it installed.
+
+```bash
+git clone --recurse-submodules
+```
+
+If you didn't clone the repo with `--recurse-submodules`, you can clone the submodules with:
+
+```bash
+git submodule update --init
+```
+
+#### Datasets
+
+The datasets are stored in the `data` folder and are not tracked by `git`.
+
+1. Download the datasets [here](https://osf.io/download/4g53p/).
+   ```bash
+   wget https://osf.io/download/4g53p/ -O ./data/bet_data_release.tar.gz
    ```
-   conda activate behavior-transformer
+2. Extract the datasets into the `data/` folder.
+
+   ```bash
+   tar -xvf data/bet_data_release.tar.gz -C data
    ```
-2. Train with `python3 train.py`. A model snapshot will be saved to `./exp_local/...`;
-3. In the corresponding environment config, set the `load_dir` to the absolute path of the snapshot directory above;
-4. Eval with `python3 run_on_env.py`.
 
-See below for detailed steps for each environment.
+The contents of the `data` folder should look like this:
 
-### CARLA
+* `data/bet_data_release.tar.gz`: The archive just downloaded.
+* `data/bet_data_release`: contains the datasets released by the paper authors.
+* `data/README.md`: A placeholder.
 
-- Train:
-  ```
-  python3 train.py --config-name=train_carla
-  ```
-  Snapshots will be saved to a new timestamped directory `./exp_local/{date}/{time}_carla_train`
-- In `configs/env/carla_multipath_merge_town04_traj_rep.yaml`, set `load_dir` to the absolute path of the directory above.
-- Evaluation:
-  ```
-  python3 run_on_env.py --config-name=eval_carla
-  ```
+### Environment
 
-### Franka kitchen
+We provide installation methods to meet different systems.
+The methods aim to insure ease of use, portability, and reproducibility thanks to Docker.
+It is hard to cover all systems, so we focused on the main ones.
 
-- Train:
-  ```
-  python3 train.py --config-name=train_kitchen
-  ```
-  Snapshots will be saved to a new timestamped directory `./exp_local/{date}/{time}_kitchen_train`
-- In `configs/env/relay_kitchen_traj.yaml`, set `load_dir` to the absolute path of the directory above.
-- Evaluation:
-  ```
-  export PYTHONPATH=$PYTHONPATH:$(pwd)/relay-policy-learning/adept_envs
-  python3 run_on_env.py --config-name=eval_kitchen
-  ```
-  (Evaluation requires including the relay policy learning repo in `PYTHONPATH`.)
+- A: **amd64 with CUDA:** for machines with Nvidia GPUs with Intel CPUs.
+- B: **amd 64 CPU-only:** for machines with Intel CPUs.
+- C: **arm64 with MPS:** to leverage the M1 GPU of Apple machines.
 
-### Block push
-Update (11/17/22): There was a small error in the published hyperparameters for Block push (namely `window_size` and `batch_size`). We have updated the hyperparameters in the config files to the parameters that replicate the results in the paper. We apologize for any inconvenience.
-- Train:
-  ```
-  python3 train.py --config-name=train_blockpush
-  ```
-  Snapshots will be saved to a new timestamped directory `./exp_local/{date}/{time}_blockpush_train`
-- In `configs/env/block_pushing_multimodal_fixed_target.yaml`, set `load_dir` to the absolute path of the directory above.
-- Evaluation:
-  ```
-  ASSET_PATH=$(pwd) python3 run_on_env.py --config-name=eval_blockpush
-  ```
-  (Evaluation requires including this repository in `ASSET_PATH`.)
-</details>
+#### A&B: amd64 (CUDA and CPU-only)
 
-### Speeding up evaluation
-- Rendering can be disabled for the kitchen and block pushing environments: set `enable_render: False` in `configs/eval_kitchen.yaml`, `configs/eval_blockpush.yaml`.
-  
-  (This option does not affect CARLA, as it requires rendering for RGB camera observations.)
-- CARLA (Unreal Engine 4) renders on GPU 0 by default. If multiple GPUs are available, running the evaluated model on other GPUs can speed up evaluation: e.g. set `device: cuda:1` in `configs/eval_carla.yaml`.
+This installation method is adapted from the [Cresset initiative](https://github.com/cresset-template/cresset).
+Refer to the Cresset repository for more details.
 
-## Acknowledgements
-We are indebted to the following codebases and tools for making our lives significantly easier.
-- [karpathy/MinGPT](https://github.com/karpathy/minGPT): MinGPT implementation and hyperparameters.
-- [facebookresearch/hydra](https://github.com/facebookresearch/hydra): Configuration managements.
-- [psf/black](https://github.com/psf/black): Linting.
+Steps prefixed with [CUDA] are only required for the CUDA option.
+
+**Prerequisites:**
+To check if you have each of them run `<command-name> --version` or `<command-name> version` in the terminal.
+
+* [`make`](https://cmake.org/install/).
+* [`docker`](https://docs.docker.com/engine/). (v20.10+)
+* [`docker compose`](https://docs.docker.com/compose/install/) (V2)
+* [CUDA] [Nvidia CUDA Driver](https://www.nvidia.com/download/index.aspx) (Only the driver. No CUDA toolkit, etc)
+* [CUDA] [`nvidia-docker`](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html#docker) (the NVIDIA Container Toolkit).
+
+**Installation**
+
+```bash
+cd installation/amd64
+```
+
+Run
+
+```bash
+make env
+```
+
+The `.env` file will be created in the installation directory. You need to edit it according to the following needs:
+
+[CUDA] If you are using an old Nvidia GPU (i.e. [capability](https://developer.nvidia.com/cuda-gpus#compute)) < 3.7) you
+need to compile PyTorch from source.
+Find the compute capability for your GPU and edit it below.
+
+```bash
+BUILD_MODE=include               # Whether to build PyTorch from source.
+CCA=3.5                          # Compute capability.
+```
+
+[CUDA] If your Nvidia drivers are also old you may need to change the CUDA Toolkit version.
+See
+the [compatibility matrix](https://docs.nvidia.com/cuda/cuda-toolkit-release-notes/index.html#cuda-major-component-versions__table-cuda-toolkit-driver-versions)
+for compatible versions of the CUDA driver and CUDA Toolkit
+
+```bash
+CUDA_VERSION=11.3.1                # Must be compatible with hardware and CUDA driver.
+CUDNN_VERSION=8                    # Only major version specifications are available.
+```
+
+Build the docker image by running the following.
+Set `SERVICE=cuda` or `SERVICE=cpu` for your desired option. The default is `SERVICE=cuda`.
+
+```bash
+make build SERVICE=<cpu|cuda>
+````
+
+Then to use the environment, run
+
+```bash
+make exec SERVICE=<cpu|cuda>
+```
+
+and you'll be inside the container.
+
+To run multiple instances of the container you can use
+
+```bash
+make run SERVICE=<cpu|cuda>
+```
+
+##### Using a pre-built Docker Image
+
+We provide pre-built AMD64 CUDA images on Docker Hub for easier reproducibility.
+Visit [https://hub.docker.com/r/mlrc2022bet/bet-reproduction/tags](https://hub.docker.com/r/mlrc2022bet/bet-reproduction/tags)
+to find a suitable Docker image.
+
+To download and use the CUDA 11.2.2 image, follow these steps.
+1. Run `docker pull mlrc2022bet/bet-reproduction:cuda112-py38` on the host.
+2. Run `docker tag mlrc2022bet/bet-reproduction:cuda112-py38 bet-user:cuda` to change the name of the image.
+This part is necessary due to the naming conventions in the `docker-compose.yaml` file.
+3. Edit the `.env` file to set the `UID, GID, USR, GRP, and IMAGE_NAME` values generated by the `make env` command.
+
+An issue with the Docker Hub images is that their User ID (UID) and Group ID (GID)
+values have been fixed to the default values of `UID=1000, GID=1000, USR=user, GRP=user`.
+
+The `.env` file must be edited to use the downloaded images.
+An example of the resulting `.env` file would be as follows:
+```text
+# Make sure that `IMAGE_NAME` matches `bet-user:cuda` instead of the default value generated by `make env`.
+IMAGE_NAME=bet-user  # Do not add `:cuda` to the name.
+PROJECT_ROOT=/opt/project
+UID=1000
+GID=1000
+USR=user
+GRP=user
+# W&B configurations must be included manually.
+WANDB_MODE=online
+WANDB_API_KEY=<your_key>
+```
+
+4. Run `make up` to start the container.
+5. Run `make exec` to enter the container.
+6. Run `sudo chown -R $(id -u):$(id -g) /opt/project` inside the container to change ownership of the project root.
+7. After finishing training, run `sudo chown -R $(id -u):$(id -g) bet-reproduction` from the host to restore ownership to the host user.
+
+
+#### C: MPS (Apple silicon)
+
+As the MPS backend isn't supported by PyTorch on Docker, this methods relies on a local installation of `conda`, thus
+unfortunately limiting portability and reproducibility.
+We provide an `environment.yml` file adapted from the BeT's author's repo to be compatible with the M1 system.
+
+**Prerequisites:**
+
+* `conda`: which we recommend installing with [miniforge](https://github.com/conda-forge/miniforge).
+
+**Installation**
+
+```bash
+conda env create --file=installation/osx-arm64/environment.yml
+conda activate behavior-transformer
+```
+
+Set environment variables.
+
+```bash
+export PYTHONPATH=$PYTHONPATH:$(pwd)/relay-policy-learning/adept_envs
+export ASSET_PATH=$(pwd)
+export PYTHONDONTWRITEBYTECODE=1
+export HYDRA_FULL_ERROR=1
+```
+
+### Logging
+
+We track our experiments with [Weights and Biases](https://wandb.ai/site).
+To use it, either
+
+1. [Docker] Add your `wandb` [API key](https://wandb.ai/authorize) to the `.env` file
+    ```bash
+    WANDB_MODE=online
+    WANDB_API_KEY=<your_key>
+    ```
+   then `make up SERVICE=<cpu|cuda>`.
+
+2. Or, run
+
+    ```bash
+    export WANDB_MODE=online && wandb login
+    ```
+   in the docker container, or in your custom environment.
+
+### Testing
+
+Test your setup by running the default training and evaluation scripts in each of the environments.
+
+Environment values (`<env>` below) can be `blockpush`, `kitchen`, `pointmass1`, or `pointmass2`.
+
+Training.
+
+```bash
+python train.py env=<env> experiment.num_prior_epochs=1
+```
+
+Evaluation.
+Find the model you just trained in `train_runs/train_<env>/<date>/<job_id>`.
+Plug it in the command below.
+
+```bash
+python run_on_env.py env=<env> experiment.num_eval_eps=1 \
+model.load_dir=$(pwd)/train_runs/train_<env>/<date>/<job_id>
+```
+
+### Using the reproducibility scripts
+
+We provide scripts to reproduce our training and evaluation results. For example,
+to reproduce the Blockpush results with the configurations from the paper, run 
+`sh reproducibility_scripts/paper_params/blockpush.sh`.
+This will run a cross-validation training for 3 independent runs with evaluations for each of the runs.
+
+Other ablations are also available in the `reproducibility_scripts` directory.
+
+Note that the directories in `train_runs` and `eval_runs` directories corresponding to each experiment should not exist before starting to prevent directory name clashes.
+
+For example, the Blockpush experiments using the paper parameters will create 
+`train_runs/train_blockpush/reproduction/paper_params` and 
+`eval_runs/eval_blockpush/reproduction/paper_params` subdirectories.
+
+The subdirectories inside `reproduction` must be deleted before the corresponding run can be launched.
+This may be necessary if the previous run was terminated before completion.
+
+## Reproducing our results
+
+We provide model weights, their rollouts, and their evaluation metrics for all the experiments we ran.
+You can use these to reproduce our results at any stage of the pipeline.
+In addition, we share our Weights and Biases runs in this [W&B project](https://wandb.ai/skandermoalla/behavior_transformer_repro?workspace=default).
+
+The scripts used to generate the models, their rollouts, and compute their evaluation metrics can be found in `reproducibility_scripts/`
+
+Obtain the model weights, the rollouts, and the logs of the evaluations with
+
+```bash
+wget https://www.dropbox.com/s/y7c0cerbjm1hap6/weights_rollouts_and_metrics.tar.gz
+tar -xvf weights_rollouts_and_metrics.tar.gz
+```
+
+## Experiment with different configurations
+
+The configurations are stored in the `configs/` directory and are subdivided into categories.
+They are managed by [Hydra](https://hydra.cc/docs/intro/)
+You can experiment with different configurations by passing the relevant flags.
+You can get examples on how to do so in the `reproducibility_scripts/` directory.
+

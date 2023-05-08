@@ -5,19 +5,29 @@ import numpy as np
 from envs.multi_route import multi_route
 
 
-class MultiRouteEnvV1(gym.Env):
+class MultiRouteEnvV0(gym.Env):
     metadata = {"render.modes": ["human", "rgb_array"]}
     NUM_ENV_STEPS = 50
 
-    def __init__(self) -> None:
+    def __init__(
+            self,
+            obs_high_bound=6,
+            obs_low_bound=-1,
+            start_state_noise=0.1,
+            starting_point=np.array([1, 2]),
+            target=np.array([5, 2]),
+            use_snap: bool = True,
+    ) -> None:
         super().__init__()
-        self.obs_high_bound = 2 * multi_route.BOUNDS + 2
-        self.obs_low_bound = -2
+        self.obs_high_bound = obs_high_bound
+        self.obs_low_bound = obs_low_bound
         self._dim = 2
-        self._noise_scale = 0.25
-        self._starting_point = np.zeros(self._dim)
+        self._start_state_noise = start_state_noise
+        self._starting_point = starting_point
+        self._target = target
+        self.use_snap = use_snap
 
-        action_limit = 2  # double of the step size
+        action_limit = 2
         self.action_space = spaces.Box(
             -action_limit,
             action_limit,
@@ -32,15 +42,14 @@ class MultiRouteEnvV1(gym.Env):
         )
 
         self._target_bounds = spaces.Box(
-            2 * multi_route.BOUNDS - 1,
-            2 * multi_route.BOUNDS + 1,
-            shape=self._starting_point.shape,
+            low=self._target-0.5,
+            high=self._target+0.5,
             dtype=np.float64,
         )
 
     def reset(self):
         self._state = self._starting_point + np.random.normal(
-            0, self._noise_scale, size=self._starting_point.shape
+            0, self._start_state_noise, size=self._starting_point.shape
         )
         return np.copy(self._state)
 
@@ -48,6 +57,9 @@ class MultiRouteEnvV1(gym.Env):
         err_msg = f"{action!r} ({type(action)}) invalid"
         assert self.action_space.contains(action), err_msg
         self._state += action
+        if self.use_snap:
+            self._state = np.round(self._state)
+            assert np.all(self._state % 1 == 0)
         reward = 0
         done = False
 

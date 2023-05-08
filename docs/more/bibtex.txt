@@ -1,8 +1,0 @@
-@inproceedings{
-      shafiullah2022behavior,
-      title={Behavior Transformers: Cloning $k$ modes with one stone},
-      author={Nur Muhammad Mahi Shafiullah and Zichen Jeff Cui and Ariuntuya Altanzaya and Lerrel Pinto},
-      booktitle={Thirty-Sixth Conference on Neural Information Processing Systems},
-      year={2022},
-      url={https://openreview.net/forum?id=agTr-vRQsa}
-}

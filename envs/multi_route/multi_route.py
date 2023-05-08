@@ -2,32 +2,39 @@ import einops
 import numpy as np
 import matplotlib.pyplot as plt
 
-
-BOUNDS = 10
 MULTI_PATH_WAYPOINTS_1 = (
     (
-        (0, 0),
-        (BOUNDS, 0),
-        (BOUNDS, BOUNDS),
-        (BOUNDS, 2 * BOUNDS),
-        (2 * BOUNDS, 2 * BOUNDS),
+        (1, 2), (2, 2), (2, 3), (2, 4), (3, 4), (4, 4), (4, 3), (4, 2), (5, 2),
     ),
     (
-        (0, 0),
-        (BOUNDS, BOUNDS),
-        (2 * BOUNDS, 2 * BOUNDS),
-    ),
-    (
-        (0, 0),
-        (0, BOUNDS),
-        (BOUNDS, BOUNDS),
-        (2 * BOUNDS, BOUNDS),
-        (2 * BOUNDS, 2 * BOUNDS),
+        (1, 2), (2, 2), (2, 1), (2, 0), (3, 0), (4, 0), (4, 1), (4, 2), (5, 2),
     ),
 )
 
-PATH_PROBS_1 = (0.3, 0.4, 0.3)
-PATH_PROBS_2 = (0.5, 0.0, 0.5)
+MULTI_PATH_WAYPOINTS_2 = (
+    (
+        (0, 0),
+        (4, 0),
+        (4, 4),
+        (4, 8),
+        (8, 8),
+    ),
+    (
+        (0, 0),
+        (4, 4),
+        (8, 8),
+    ),
+    (
+        (0, 0),
+        (0, 4),
+        (4, 4),
+        (8, 4),
+        (8, 8),
+    ),
+)
+
+PATH_PROBS_2 = (0.3, 0.4, 0.3)
+PATH_PROBS_1 = (0.5, 0.5)
 
 
 def get_cmap(n, name="rainbow"):
@@ -43,7 +50,13 @@ def interpolate(point_1, point_2, num_intermediate, endpoint=True):
 
 
 class PathGenerator:
-    def __init__(self, waypoints, step_size, num_draws=10, noise_scale=0.25):
+    def __init__(
+            self,
+            waypoints,
+            step_size,
+            num_draws=10,
+            noise_scale=0.1
+    ):
         """
         waypoints is a list of points where the
         """
@@ -66,14 +79,19 @@ class PathGenerator:
                     interpolate(
                         point_1,
                         point_2,
-                        path_num_steps,
-                        endpoint=(i == (len(waypoints) - 2)),
+                        path_num_steps + (
+                            i == (len(waypoints) - 2)
+                            and path_num_steps == 1
+                        ),
+                        endpoint=(
+                                i == (len(waypoints) - 2)
+                        ),
                     )
                 )
             final_path = np.concatenate(final_path)
             self._paths.append(final_path)
 
-    def draw(self):
+    def draw(self, show=True, save=False):
         # Draw the paths a little randomly each time.
         get_color = get_cmap(len(self._paths) + 1)
         for color, path in enumerate(self._paths):
@@ -85,10 +103,12 @@ class PathGenerator:
                 random_path = path + random_noise
 
                 plt.plot(
-                    random_path[:, 0], random_path[:, 1], "o-", c=path_color, alpha=0.25
+                    random_path[:, 0], random_path[:, 1], "x-", c=path_color, alpha=0.25
                 )
-
-        plt.show()
+        if show:
+            plt.show()
+        if save:
+            plt.savefig("training_dataset.png")
 
     def get_random_paths(self, num_paths, probabilities=None):
         if probabilities is None:

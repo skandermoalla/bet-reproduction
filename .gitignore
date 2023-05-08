@@ -1,9 +1,7 @@
 **sync-conflict**
 
-exp_local
 __pycache__
 *.pyc
-data
 .DS_Store
 
 
@@ -15,9 +13,6 @@ data
 # jupyter notebook
 notebooks
 .ipynb_checkpoints
-*.ipynb
-wandb
-exp
 .DS_Store
 
 # conda env
@@ -25,3 +20,16 @@ bin/
 etc/
 lib/
 share/
+
+# JetBrains
+.idea/
+
+# Runs
+train_runs
+eval_runs
+compute_metrics_runs
+weights_rollouts_and_metrics.tar.gz
+
+# Data
+bet_data_release.tar.gz
+data/bet_data_release

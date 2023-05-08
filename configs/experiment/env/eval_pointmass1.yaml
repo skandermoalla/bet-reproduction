@@ -1,0 +1,19 @@
+# @package _global_
+
+experiment:
+
+  # Environment running setup
+  num_eval_eps: 100
+  action_batch_size: 1
+  num_eval_steps: 50
+  use_state_prior: True
+  enable_offsets: True
+  action_update_every: 1
+  flatten_obs: False
+  enable_render: False
+  vectorized_env: False
+  async_envs: False
+  num_envs: 1
+
+  # Plotting setup
+  plot_trajectories: True

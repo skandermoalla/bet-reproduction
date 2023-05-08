@@ -1,0 +1,23 @@
+name: train_${env.name}
+lazy_init_models: True
+device: cuda
+seed: 42
+
+# Prior training details
+eval_prior_every: 1
+save_prior_every: 1
+
+# Logging frequency
+eval_every: 1
+save_every: 1
+
+# Cross-validation
+num_cv_runs: 2
+cv_run_idx: ???
+save_subdir: ${now:%Y.%m.%d-%H.%M.%S}
+
+# Logging.
+log_dataset: False
+log_bins: False
+log_train_bin_assignments: False
+
