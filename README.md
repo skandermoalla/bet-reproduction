@@ -38,7 +38,7 @@ It is structured as follows:
 
 #### Cloning
 
-Clone the dataset with its submodules.
+Clone the repository with its submodules.
 We track [Relay Policy Learning](https://github.com/google-research/relay-policy-learning) repo as a submodule for the
 Franka kitchen environment.
 It uses [`git-lfs`](https://git-lfs.github.com/). Make sure you have it installed.
