@@ -281,10 +281,10 @@ In addition, we share our Weights and Biases runs in this [W&B project](https://
 
 The scripts used to generate the models, their rollouts, and compute their evaluation metrics can be found in `reproducibility_scripts/`
 
-Obtain the model weights, the rollouts, and the logs of the evaluations with
+Obtain the model weights, the rollouts, and the logs of the evaluations by downloading [this file](https://www.icloud.com/iclouddrive/0260-9aJgw-s1AR0-RUeQGa7A#weights_rollouts_and_metrics).
+Move it to the machine where you're running the code then extract it with
 
 ```bash
-wget https://www.dropbox.com/s/y7c0cerbjm1hap6/weights_rollouts_and_metrics.tar.gz
 tar -xvf weights_rollouts_and_metrics.tar.gz
 ```
 
